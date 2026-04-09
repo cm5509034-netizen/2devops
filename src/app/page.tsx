@@ -1,18 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 
 // Icons as SVG components
 const ArrowRight = () => (
@@ -76,45 +69,70 @@ const Mail = () => (
   </svg>
 );
 
-// Visa Icon
-const VisaIcon = () => (
-  <svg viewBox="0 0 48 32" className="h-8" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect width="48" height="32" rx="4" fill="#1434CB"/>
-    <path d="M19.5 21H17.5L18.9 11H20.9L19.5 21Z" fill="white"/>
-    <path d="M28.5 11.2C28.1 11.1 27.4 11 26.6 11C24.5 11 23 12.1 23 13.6C23 14.7 24 15.3 24.8 15.7C25.6 16.1 25.9 16.4 25.9 16.8C25.9 17.4 25.2 17.7 24.5 17.7C23.5 17.7 23 17.6 22.2 17.2L21.9 17.1L21.6 18.9C22.2 19.2 23.1 19.4 24.1 19.4C26.3 19.4 27.8 18.3 27.8 16.7C27.8 15.8 27.2 15.1 26 14.5C25.3 14.1 24.8 13.9 24.8 13.5C24.8 13.1 25.2 12.8 26.1 12.8C26.8 12.8 27.3 12.9 27.7 13.1L27.9 13.2L28.5 11.2Z" fill="white"/>
-    <path d="M32.2 11H30.6C30.1 11 29.7 11.1 29.5 11.7L26.4 21H28.6L29 19.7H31.7L32 21H34L32.2 11ZM29.6 18C29.8 17.5 30.6 15.2 30.6 15.2C30.6 15.2 30.8 14.6 30.9 14.2L31.1 15.1C31.1 15.1 31.6 17.3 31.7 18H29.6Z" fill="white"/>
-    <path d="M16.3 11L14.2 17.8L14 16.7C13.5 15.2 12.2 13.6 10.7 12.8L12.5 21H14.8L18.6 11H16.3Z" fill="white"/>
-    <path d="M12.5 11H9.1L9 11.2C11.7 11.9 13.5 13.6 14 16.7L13.4 11.7C13.3 11.1 12.9 11 12.5 11Z" fill="#FCBB32"/>
+// Wompi Logo
+const WompiLogo = () => (
+  <svg viewBox="0 0 100 32" className="h-8" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12.5 8L8 24H12L14.5 14L17 24H21L23.5 14L26 24H30L25.5 8H21.5L19 18L16.5 8H12.5Z" fill="#00D9A5"/>
+    <path d="M32 16C32 11.6 35.1 8 40 8C44.9 8 48 11.6 48 16C48 20.4 44.9 24 40 24C35.1 24 32 20.4 32 16ZM44 16C44 13.8 42.4 12 40 12C37.6 12 36 13.8 36 16C36 18.2 37.6 20 40 20C42.4 20 44 18.2 44 16Z" fill="#00D9A5"/>
+    <path d="M50 8H54V10C55.2 8.8 56.8 8 59 8C61.2 8 63 8.8 64 10.5C65.5 8.8 67.5 8 70 8C74 8 76 10.5 76 14.5V24H72V15C72 13 71 12 69 12C67 12 66 13 66 15V24H62V15C62 13 61 12 59 12C57 12 56 13 56 15V24H50V8H50Z" fill="#00D9A5"/>
+    <path d="M78 8H82V10C83.2 8.6 85 8 87 8C91 8 94 11.5 94 16C94 20.5 91 24 87 24C85 24 83.2 23.4 82 22V30H78V8ZM90 16C90 13.5 88.2 12 86 12C83.8 12 82 13.5 82 16C82 18.5 83.8 20 86 20C88.2 20 90 18.5 90 16Z" fill="#00D9A5"/>
+    <circle cx="97" cy="21" r="3" fill="#00D9A5"/>
   </svg>
 );
 
-// Mastercard Icon
-const MastercardIcon = () => (
-  <svg viewBox="0 0 48 32" className="h-8" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect width="48" height="32" rx="4" fill="#1A1F36"/>
-    <circle cx="19" cy="16" r="8" fill="#EB001B"/>
-    <circle cx="29" cy="16" r="8" fill="#F79E1B"/>
-    <path d="M24 10.5C25.7 11.9 26.8 13.8 26.8 16C26.8 18.2 25.7 20.1 24 21.5C22.3 20.1 21.2 18.2 21.2 16C21.2 13.8 22.3 11.9 24 10.5Z" fill="#FF5F00"/>
-  </svg>
-);
+// Configuración de Wompi - SANDBOX (para pruebas)
+// Para producción, cambiar a pub_prod_... y el endpoint a production.wompi.co
+const WOMPI_PUBLIC_KEY = "pub_test_g8ebxmCAyMRicPH6eNVqPBAO2jWpIqOD"; // Llave de prueba
+const WOMPI_REDIRECT_URL = typeof window !== 'undefined' ? `${window.location.origin}/` : "https://localhost:3000/";
+
+// Función para generar referencia única
+const generateReference = () => {
+  const timestamp = Date.now();
+  const random = Math.random().toString(36).substring(2, 8);
+  return `DEVOPS-${timestamp}-${random}`;
+};
 
 export default function Home() {
   const [hours, setHours] = useState<number>(1);
-  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
-  const [cardNumber, setCardNumber] = useState("");
-  const [cardHolder, setCardHolder] = useState("");
-  const [expiryDate, setExpiryDate] = useState("");
-  const [cvv, setCvv] = useState("");
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [paymentReference, setPaymentReference] = useState("DEVOPS-INIT");
+  const wompiFormRef = useRef<HTMLFormElement>(null);
+  const [isMounted, setIsMounted] = useState(false);
 
   const PRICE_PER_HOUR = 15;
+  const PRICE_PER_HOUR_COP = 60000; // $15 USD ≈ $60,000 COP aproximadamente
   const totalPrice = hours * PRICE_PER_HOUR;
+  const totalPriceCOP = hours * PRICE_PER_HOUR_COP;
+  const amountInCents = totalPriceCOP * 100;
 
-  const handleOpenPaymentModal = () => {
-    if (hours > 0) {
-      setIsPaymentModalOpen(true);
+  // Marcar como montado para evitar problemas de hidratación
+  useEffect(() => {
+    setIsMounted(true);
+    setPaymentReference(generateReference());
+  }, []);
+
+  // Generar nueva referencia cuando cambian las horas
+  useEffect(() => {
+    if (isMounted) {
+      setPaymentReference(generateReference());
     }
-  };
+  }, [hours, isMounted]);
+
+  // Cargar script de Wompi
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://checkout.wompi.co/widget.js';
+    script.async = true;
+    document.body.appendChild(script);
+
+    return () => {
+      // Cleanup
+      const existingScript = document.querySelector('script[src="https://checkout.wompi.co/widget.js"]');
+      if (existingScript) {
+        existingScript.remove();
+      }
+    };
+  }, []);
 
   const handleHoursChange = (value: string) => {
     const numValue = parseInt(value) || 0;
@@ -131,176 +149,43 @@ export default function Home() {
     if (hours > 1) setHours(hours - 1);
   };
 
-  const formatCardNumber = (value: string) => {
-    const cleaned = value.replace(/\D/g, "");
-    const groups = cleaned.match(/.{1,4}/g);
-    return groups ? groups.join(" ").substring(0, 19) : "";
-  };
+  const handlePayWithWompi = () => {
+    if (hours < 1) return;
 
-  const formatExpiryDate = (value: string) => {
-    const cleaned = value.replace(/\D/g, "");
-    if (cleaned.length >= 2) {
-      return `${cleaned.substring(0, 2)}/${cleaned.substring(2, 4)}`;
-    }
-    return cleaned;
-  };
+    // Generar nueva referencia para esta transacción
+    const newReference = generateReference();
+    setPaymentReference(newReference);
+    setIsLoading(true);
 
-  const detectCardType = (number: string) => {
-    const cleaned = number.replace(/\D/g, "");
-    if (cleaned.startsWith("4")) return "visa";
-    if (/^5[1-5]/.test(cleaned) || /^2[2-7]/.test(cleaned)) return "mastercard";
-    return null;
-  };
-
-  const handleSubmitPayment = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsProcessing(true);
-
-    // Simulate payment processing
+    // Pequeño delay para asegurar que el script de Wompi esté cargado
     setTimeout(() => {
-      setIsProcessing(false);
-      setIsPaymentModalOpen(false);
-      alert(`Pago procesado exitosamente.\n\n${hours} hora(s) de servicio - Total: $${totalPrice}\n\nRecibirás un correo de confirmación con los detalles de tu compra.`);
-      // Reset form
-      setCardNumber("");
-      setCardHolder("");
-      setExpiryDate("");
-      setCvv("");
-    }, 2000);
+      if (wompiFormRef.current) {
+        // Actualizar los valores del formulario
+        const publicKeyInput = wompiFormRef.current.querySelector('input[name="public-key"]') as HTMLInputElement;
+        const currencyInput = wompiFormRef.current.querySelector('input[name="currency"]') as HTMLInputElement;
+        const amountInput = wompiFormRef.current.querySelector('input[name="amount-in-cents"]') as HTMLInputElement;
+        const referenceInput = wompiFormRef.current.querySelector('input[name="reference"]') as HTMLInputElement;
+        const redirectInput = wompiFormRef.current.querySelector('input[name="redirect-url"]') as HTMLInputElement;
+
+        if (publicKeyInput) publicKeyInput.value = WOMPI_PUBLIC_KEY;
+        if (currencyInput) currencyInput.value = "COP";
+        if (amountInput) amountInput.value = amountInCents.toString();
+        if (referenceInput) referenceInput.value = newReference;
+        if (redirectInput) redirectInput.value = WOMPI_REDIRECT_URL;
+
+        // Buscar y hacer clic en el botón del widget de Wompi
+        const wompiButton = wompiFormRef.current.querySelector('button[type="button"]') as HTMLButtonElement;
+        if (wompiButton) {
+          wompiButton.click();
+        }
+      }
+      setIsLoading(false);
+    }, 500);
   };
 
   return (
     <main className="min-h-screen bg-background grid-bg relative">
-      {/* Payment Modal */}
-      <Dialog open={isPaymentModalOpen} onOpenChange={setIsPaymentModalOpen}>
-        <DialogContent className="sm:max-w-[500px] bg-card border-border">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-bold flex items-center gap-3">
-              <CreditCard />
-              Pago Seguro
-            </DialogTitle>
-            <DialogDescription>
-              {hours} hora(s) de servicio DevOps - Total: ${totalPrice}
-            </DialogDescription>
-          </DialogHeader>
 
-          <form onSubmit={handleSubmitPayment} className="space-y-6 mt-4">
-            {/* Order Summary */}
-            <div className="p-4 bg-secondary/30 rounded-lg space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Precio por hora:</span>
-                <span>${PRICE_PER_HOUR}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Horas:</span>
-                <span>{hours}</span>
-              </div>
-              <div className="border-t border-border/50 pt-2 mt-2">
-                <div className="flex justify-between font-bold text-lg">
-                  <span>Total:</span>
-                  <span className="text-primary">${totalPrice}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Card Icons */}
-            <div className="flex items-center gap-3 justify-center p-4 bg-secondary/30 rounded-lg">
-              <VisaIcon />
-              <MastercardIcon />
-              <span className="text-sm text-muted-foreground ml-2">Aceptamos Visa y Mastercard</span>
-            </div>
-
-            {/* Card Number */}
-            <div className="space-y-2">
-              <Label htmlFor="cardNumber">Número de Tarjeta</Label>
-              <div className="relative">
-                <Input
-                  id="cardNumber"
-                  placeholder="1234 5678 9012 3456"
-                  value={cardNumber}
-                  onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
-                  maxLength={19}
-                  required
-                  className="pl-4 pr-12 bg-background border-border/50 focus:border-primary"
-                />
-                <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                  {detectCardType(cardNumber) === "visa" && <VisaIcon />}
-                  {detectCardType(cardNumber) === "mastercard" && <MastercardIcon />}
-                </div>
-              </div>
-            </div>
-
-            {/* Cardholder Name */}
-            <div className="space-y-2">
-              <Label htmlFor="cardHolder">Nombre del Titular</Label>
-              <Input
-                id="cardHolder"
-                placeholder="NOMBRE COMO APARECE EN LA TARJETA"
-                value={cardHolder}
-                onChange={(e) => setCardHolder(e.target.value.toUpperCase())}
-                required
-                className="bg-background border-border/50 focus:border-primary"
-              />
-            </div>
-
-            {/* Expiry and CVV */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="expiry">Fecha de Vencimiento</Label>
-                <Input
-                  id="expiry"
-                  placeholder="MM/YY"
-                  value={expiryDate}
-                  onChange={(e) => setExpiryDate(formatExpiryDate(e.target.value))}
-                  maxLength={5}
-                  required
-                  className="bg-background border-border/50 focus:border-primary"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="cvv">CVV</Label>
-                <Input
-                  id="cvv"
-                  type="password"
-                  placeholder="***"
-                  value={cvv}
-                  onChange={(e) => setCvv(e.target.value.replace(/\D/g, "").substring(0, 4))}
-                  maxLength={4}
-                  required
-                  className="bg-background border-border/50 focus:border-primary"
-                />
-              </div>
-            </div>
-
-            {/* Security Notice */}
-            <div className="flex items-start gap-3 p-3 bg-primary/10 rounded-lg text-sm">
-              <Shield />
-              <span className="text-muted-foreground">
-                Tu información está protegida con encriptación SSL de 256 bits. Nunca almacenamos los datos completos de tu tarjeta.
-              </span>
-            </div>
-
-            {/* Submit Button */}
-            <Button
-              type="submit"
-              className="w-full btn-primary text-primary-foreground py-6 text-lg font-semibold"
-              disabled={isProcessing}
-            >
-              {isProcessing ? (
-                <span className="flex items-center gap-2">
-                  <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                  </svg>
-                  Procesando pago...
-                </span>
-              ) : (
-                `Pagar $${totalPrice}`
-              )}
-            </Button>
-          </form>
-        </DialogContent>
-      </Dialog>
 
       {/* Background Orbs */}
       <div className="gradient-orb orb-cyan w-[600px] h-[600px] -top-48 -left-48 fixed animate-pulse-glow" />
@@ -321,7 +206,10 @@ export default function Home() {
             <a href="#planes" className="text-muted-foreground hover:text-foreground transition-colors">Planes</a>
             <a href="#pago" className="text-muted-foreground hover:text-foreground transition-colors">Pago</a>
           </div>
-          <Button className="btn-primary text-primary-foreground font-semibold px-6">
+          <Button
+            className="btn-primary text-primary-foreground font-semibold px-6"
+            onClick={() => window.open('https://wa.me/573114366027?text=Hola%2C%20estoy%20interesado%20en%20los%20servicios%20DevOps', '_blank')}
+          >
             Contactar
           </Button>
         </div>
@@ -488,7 +376,7 @@ export default function Home() {
       {/* Section Divider */}
       <div className="section-divider max-w-4xl mx-auto" />
 
-      {/* Pricing Section - NUEVO SISTEMA POR HORA */}
+      {/* Pricing Section - SISTEMA POR HORA CON WOMPI */}
       <section id="planes" className="py-32 px-6 relative">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-16">
@@ -516,8 +404,11 @@ export default function Home() {
             <div className="text-center mb-8">
               <div className="flex items-baseline justify-center gap-2">
                 <span className="text-6xl font-bold text-gradient-cyan">${PRICE_PER_HOUR}</span>
-                <span className="text-2xl text-muted-foreground">/hora</span>
+                <span className="text-2xl text-muted-foreground">USD/hora</span>
               </div>
+              <p className="text-sm text-muted-foreground mt-2">
+                ≈ ${PRICE_PER_HOUR_COP.toLocaleString('es-CO')} COP/hora
+              </p>
             </div>
 
             {/* Hours Selector */}
@@ -560,9 +451,13 @@ export default function Home() {
 
             {/* Total Calculation */}
             <div className="bg-secondary/30 rounded-xl p-6 mb-8">
-              <div className="flex justify-between items-center text-lg">
-                <span className="text-muted-foreground">{hours} hora(s) × ${PRICE_PER_HOUR}</span>
-                <span className="text-3xl font-bold text-gradient-cyan">${totalPrice}</span>
+              <div className="flex justify-between items-center text-lg mb-2">
+                <span className="text-muted-foreground">{hours} hora(s) × ${PRICE_PER_HOUR} USD</span>
+                <span className="text-2xl font-bold text-gradient-cyan">${totalPrice} USD</span>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-muted-foreground">Total en pesos colombianos:</span>
+                <span className="font-semibold text-primary">${totalPriceCOP.toLocaleString('es-CO')} COP</span>
               </div>
             </div>
 
@@ -594,19 +489,55 @@ export default function Home() {
               </li>
             </ul>
 
-            <Button
-              className="w-full btn-primary text-primary-foreground py-6 text-lg font-semibold flex items-center justify-center gap-3"
-              onClick={handleOpenPaymentModal}
-              disabled={hours < 1}
-            >
-              <CreditCard />
-              Pagar ${totalPrice}
-            </Button>
+            {/* Wompi Payment Button */}
+            <div className="space-y-4">
+              <form
+                action="https://checkout.wompi.co/p/"
+                method="GET"
+                className="w-full"
+              >
+                <input type="hidden" name="public-key" value={WOMPI_PUBLIC_KEY} />
+                <input type="hidden" name="currency" value="COP" />
+                <input type="hidden" name="amount-in-cents" value={amountInCents} />
+                <input type="hidden" name="reference" value={paymentReference} />
+                <input type="hidden" name="redirect-url" value={WOMPI_REDIRECT_URL} />
 
-            {/* Card Icons */}
-            <div className="flex items-center justify-center gap-2 mt-4">
-              <VisaIcon />
-              <MastercardIcon />
+                <Button
+                  type="submit"
+                  className="w-full bg-[#00D9A5] hover:bg-[#00C294] text-white py-6 text-lg font-semibold flex items-center justify-center gap-3 transition-all"
+                  disabled={hours < 1 || isLoading}
+                >
+                  {isLoading ? (
+                    <span className="flex items-center gap-2">
+                      <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      Procesando...
+                    </span>
+                  ) : (
+                    <>
+                      <CreditCard />
+                      Pagar ${totalPriceCOP.toLocaleString('es-CO')} COP con Wompi
+                    </>
+                  )}
+                </Button>
+              </form>
+
+              {/* Wompi Badge */}
+              <div className="flex items-center justify-center gap-3 pt-2">
+                <span className="text-sm text-muted-foreground">Pagos seguros con</span>
+                <WompiLogo />
+              </div>
+
+              {/* Payment Methods */}
+              <div className="flex flex-wrap items-center justify-center gap-3 text-xs text-muted-foreground">
+                <span className="bg-secondary/50 px-3 py-1 rounded-full">Tarjetas de Crédito</span>
+                <span className="bg-secondary/50 px-3 py-1 rounded-full">PSE</span>
+                <span className="bg-secondary/50 px-3 py-1 rounded-full">Nequi</span>
+                <span className="bg-secondary/50 px-3 py-1 rounded-full">Bancolombia</span>
+                <span className="bg-secondary/50 px-3 py-1 rounded-full">Efecty</span>
+              </div>
             </div>
           </Card>
 
@@ -625,6 +556,14 @@ export default function Home() {
               </Button>
             ))}
           </div>
+
+          {/* Sandbox Notice */}
+          <div className="mt-8 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg max-w-xl mx-auto">
+            <p className="text-sm text-yellow-500 text-center">
+              <strong>Modo de Prueba (Sandbox):</strong> Este es un entorno de pruebas.
+              Para pagos reales, contacta al administrador para activar el modo producción.
+            </p>
+          </div>
         </div>
       </section>
 
@@ -640,7 +579,7 @@ export default function Home() {
               Proceso de <span className="text-gradient-cyan">Pago Seguro</span>
             </h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Tu seguridad es nuestra prioridad. Procesamos todos los pagos con tarjeta de crédito usando encriptación de nivel bancario.
+              Tu seguridad es nuestra prioridad. Procesamos todos los pagos con Wompi, la pasarela de pagos líder en Colombia.
             </p>
           </div>
 
@@ -650,7 +589,7 @@ export default function Home() {
               <div>
                 <h3 className="text-2xl font-bold mb-6 flex items-center gap-3">
                   <CreditCard />
-                  Flujo de Suscripción
+                  Flujo de Pago
                 </h3>
 
                 <div className="space-y-6">
@@ -669,8 +608,8 @@ export default function Home() {
                       2
                     </div>
                     <div>
-                      <h4 className="font-semibold mb-1">Ingresa tu Tarjeta</h4>
-                      <p className="text-sm text-muted-foreground">Completa el formulario seguro con los datos de tu tarjeta Visa o Mastercard.</p>
+                      <h4 className="font-semibold mb-1">Haz clic en Pagar con Wompi</h4>
+                      <p className="text-sm text-muted-foreground">Serás redirigido al checkout seguro de Wompi.</p>
                     </div>
                   </div>
 
@@ -679,8 +618,8 @@ export default function Home() {
                       3
                     </div>
                     <div>
-                      <h4 className="font-semibold mb-1">Confirma el Pago</h4>
-                      <p className="text-sm text-muted-foreground">Revisa los detalles y autoriza el pago único por tus horas seleccionadas.</p>
+                      <h4 className="font-semibold mb-1">Elige tu método de pago</h4>
+                      <p className="text-sm text-muted-foreground">Tarjeta, PSE, Nequi, Bancolombia, Efecty y más.</p>
                     </div>
                   </div>
 
@@ -689,8 +628,8 @@ export default function Home() {
                       4
                     </div>
                     <div>
-                      <h4 className="font-semibold mb-1">Recibe tu Factura</h4>
-                      <p className="text-sm text-muted-foreground">Recibirás una factura automática en tu correo electrónico.</p>
+                      <h4 className="font-semibold mb-1">Confirmación inmediata</h4>
+                      <p className="text-sm text-muted-foreground">Recibirás confirmación de tu pago y nos pondremos en contacto.</p>
                     </div>
                   </div>
                 </div>
@@ -703,32 +642,31 @@ export default function Home() {
                 </div>
                 <h3 className="text-2xl font-bold mb-4">Pago 100% Seguro</h3>
                 <p className="text-muted-foreground mb-6">
-                  Protegemos tu información financiera con encriptación SSL de 256 bits.
-                  Nunca almacenamos los datos completos de tu tarjeta.
+                  Wompi es la pasarela de pagos más segura de Colombia, respaldada por Bancolombia.
+                  Tu información financiera está protegida con los más altos estándares de seguridad.
                 </p>
 
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
                     <Shield />
-                    <span className="text-sm">Encriptación de nivel bancario</span>
+                    <span className="text-sm">Encriptación SSL de 256 bits</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <Shield />
-                    <span className="text-sm">Cancela en cualquier momento</span>
+                    <span className="text-sm">Certificación PCI DSS</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <Shield />
-                    <span className="text-sm">Sin cargos ocultos</span>
+                    <span className="text-sm">Respaldado por Bancolombia</span>
                   </div>
                 </div>
 
-                {/* Card Badges */}
+                {/* Wompi Badge */}
                 <div className="mt-8 p-4 bg-background/50 rounded-xl">
                   <div className="flex items-center justify-center gap-4 mb-3">
-                    <VisaIcon />
-                    <MastercardIcon />
+                    <WompiLogo />
                   </div>
-                  <p className="text-sm text-muted-foreground text-center">Aceptamos Visa y Mastercard</p>
+                  <p className="text-sm text-muted-foreground text-center">Pagos seguros con Wompi</p>
                 </div>
               </div>
             </div>
@@ -748,7 +686,10 @@ export default function Home() {
           <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
             Agenda una llamada gratuita de 30 minutos y descubre cómo podemos acelerar tu negocio.
           </p>
-          <Button className="btn-primary text-primary-foreground font-semibold px-10 py-6 text-lg">
+          <Button
+            className="btn-primary text-primary-foreground font-semibold px-10 py-6 text-lg"
+            onClick={() => window.open('https://wa.me/573114366027?text=Hola%2C%20me%20gustar%C3%ADa%20agendar%20una%20llamada%20gratuita%20para%20conocer%20m%C3%A1s%20sobre%20sus%20servicios%20DevOps', '_blank')}
+          >
             <Mail />
             Agendar Llamada Gratis
           </Button>
@@ -768,7 +709,16 @@ export default function Home() {
             <div className="flex items-center gap-8 text-sm text-muted-foreground">
               <a href="#" className="hover:text-foreground transition-colors">Términos</a>
               <a href="#" className="hover:text-foreground transition-colors">Privacidad</a>
-              <a href="#" className="hover:text-foreground transition-colors">Contacto</a>
+              <a
+                href="#"
+                className="hover:text-foreground transition-colors"
+                onClick={(e) => {
+                  e.preventDefault();
+                  window.open('https://wa.me/573114366027', '_blank');
+                }}
+              >
+                Contacto
+              </a>
             </div>
             <p className="text-sm text-muted-foreground">
               © 2026 DevOpsPro. Todos los derechos reservados.
