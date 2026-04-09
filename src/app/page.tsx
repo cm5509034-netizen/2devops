@@ -99,7 +99,7 @@ const MastercardIcon = () => (
 );
 
 export default function Home() {
-  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [hours, setHours] = useState<number>(1);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [cardNumber, setCardNumber] = useState("");
   const [cardHolder, setCardHolder] = useState("");
@@ -107,9 +107,28 @@ export default function Home() {
   const [cvv, setCvv] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const handleOpenPaymentModal = (planType: string) => {
-    setSelectedPlan(planType);
-    setIsPaymentModalOpen(true);
+  const PRICE_PER_HOUR = 15;
+  const totalPrice = hours * PRICE_PER_HOUR;
+
+  const handleOpenPaymentModal = () => {
+    if (hours > 0) {
+      setIsPaymentModalOpen(true);
+    }
+  };
+
+  const handleHoursChange = (value: string) => {
+    const numValue = parseInt(value) || 0;
+    if (numValue >= 0 && numValue <= 999) {
+      setHours(numValue);
+    }
+  };
+
+  const incrementHours = () => {
+    if (hours < 999) setHours(hours + 1);
+  };
+
+  const decrementHours = () => {
+    if (hours > 1) setHours(hours - 1);
   };
 
   const formatCardNumber = (value: string) => {
@@ -141,17 +160,13 @@ export default function Home() {
     setTimeout(() => {
       setIsProcessing(false);
       setIsPaymentModalOpen(false);
-      alert(`Pago procesado exitosamente para el plan ${selectedPlan?.toUpperCase()}.\n\nRecibirás un correo de confirmación con los detalles de tu suscripción.`);
+      alert(`Pago procesado exitosamente.\n\n${hours} hora(s) de servicio - Total: $${totalPrice}\n\nRecibirás un correo de confirmación con los detalles de tu compra.`);
       // Reset form
       setCardNumber("");
       setCardHolder("");
       setExpiryDate("");
       setCvv("");
     }, 2000);
-  };
-
-  const getPlanPrice = () => {
-    return selectedPlan === "starter" ? "$997" : "$2,997";
   };
 
   return (
@@ -165,11 +180,29 @@ export default function Home() {
               Pago Seguro
             </DialogTitle>
             <DialogDescription>
-              Plan {selectedPlan === "starter" ? "Starter" : "Enterprise"} - {getPlanPrice()}/mes
+              {hours} hora(s) de servicio DevOps - Total: ${totalPrice}
             </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleSubmitPayment} className="space-y-6 mt-4">
+            {/* Order Summary */}
+            <div className="p-4 bg-secondary/30 rounded-lg space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Precio por hora:</span>
+                <span>${PRICE_PER_HOUR}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Horas:</span>
+                <span>{hours}</span>
+              </div>
+              <div className="border-t border-border/50 pt-2 mt-2">
+                <div className="flex justify-between font-bold text-lg">
+                  <span>Total:</span>
+                  <span className="text-primary">${totalPrice}</span>
+                </div>
+              </div>
+            </div>
+
             {/* Card Icons */}
             <div className="flex items-center gap-3 justify-center p-4 bg-secondary/30 rounded-lg">
               <VisaIcon />
@@ -262,7 +295,7 @@ export default function Home() {
                   Procesando pago...
                 </span>
               ) : (
-                `Pagar ${getPlanPrice()}/mes`
+                `Pagar $${totalPrice}`
               )}
             </Button>
           </form>
@@ -325,6 +358,7 @@ export default function Home() {
               size="lg"
               variant="outline"
               className="border-border/50 hover:bg-secondary/50 px-8 py-6 text-lg"
+              onClick={() => document.getElementById('servicios')?.scrollIntoView({ behavior: 'smooth' })}
             >
               Ver Demo
             </Button>
@@ -454,138 +488,142 @@ export default function Home() {
       {/* Section Divider */}
       <div className="section-divider max-w-4xl mx-auto" />
 
-      {/* Pricing Section */}
+      {/* Pricing Section - NUEVO SISTEMA POR HORA */}
       <section id="planes" className="py-32 px-6 relative">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-4xl mx-auto">
           <div className="text-center mb-16">
-            <Badge className="mb-4 bg-secondary text-foreground">Planes de Suscripción</Badge>
+            <Badge className="mb-4 bg-secondary text-foreground">Precio por Hora</Badge>
             <h2 className="text-4xl md:text-5xl font-bold mb-4">
-              Elige tu <span className="text-gradient-cyan">Plan Ideal</span>
+              Paga solo por las <span className="text-gradient-cyan">Horas que Necesitas</span>
             </h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Planes flexibles con facturación automática mensual. Sin contratos a largo plazo, cancela cuando quieras.
+              Sin suscripciones ni compromisos. Selecciona las horas de servicio DevOps que requieres y paga únicamente por ellas.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            {/* Starter Plan */}
-            <Card className="pricing-card p-8 bg-card/50 backdrop-blur-sm border-border/50 relative overflow-hidden">
-              <div className="mb-6">
-                <h3 className="text-2xl font-bold mb-2">Starter</h3>
-                <p className="text-muted-foreground">Ideal para startups y equipos pequeños</p>
+          {/* Single Pricing Card */}
+          <Card className="pricing-card featured p-10 relative overflow-hidden glow-cyan max-w-xl mx-auto">
+            <Badge className="absolute top-4 right-4 bg-primary text-primary-foreground">
+              Flexible
+            </Badge>
+
+            <div className="text-center mb-8">
+              <h3 className="text-2xl font-bold mb-2">Servicio DevOps por Hora</h3>
+              <p className="text-muted-foreground">Consultoría, CI/CD, Infraestructura Cloud y más</p>
+            </div>
+
+            {/* Price Display */}
+            <div className="text-center mb-8">
+              <div className="flex items-baseline justify-center gap-2">
+                <span className="text-6xl font-bold text-gradient-cyan">${PRICE_PER_HOUR}</span>
+                <span className="text-2xl text-muted-foreground">/hora</span>
               </div>
+            </div>
 
-              <div className="mb-8">
-                <div className="flex items-baseline gap-2">
-                  <span className="text-5xl font-bold">$997</span>
-                  <span className="text-muted-foreground">/mes</span>
-                </div>
-                <p className="text-sm text-muted-foreground mt-2">Facturación automática mensual</p>
+            {/* Hours Selector */}
+            <div className="mb-8">
+              <Label htmlFor="hours" className="text-center block mb-4 text-lg font-medium">
+                ¿Cuántas horas necesitas?
+              </Label>
+              <div className="flex items-center justify-center gap-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="lg"
+                  className="w-14 h-14 text-2xl font-bold border-border/50 hover:bg-secondary/50"
+                  onClick={decrementHours}
+                  disabled={hours <= 1}
+                >
+                  -
+                </Button>
+                <Input
+                  id="hours"
+                  type="number"
+                  min="1"
+                  max="999"
+                  value={hours}
+                  onChange={(e) => handleHoursChange(e.target.value)}
+                  className="w-28 h-14 text-center text-2xl font-bold bg-background border-border/50 focus:border-primary"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="lg"
+                  className="w-14 h-14 text-2xl font-bold border-border/50 hover:bg-secondary/50"
+                  onClick={incrementHours}
+                  disabled={hours >= 999}
+                >
+                  +
+                </Button>
               </div>
+            </div>
 
-              <ul className="space-y-4 mb-8">
-                <li className="flex items-start gap-3">
-                  <Check />
-                  <span>Hasta 3 proyectos activos</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <Check />
-                  <span>Setup inicial de CI/CD</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <Check />
-                  <span>Monitoreo básico 24/7</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <Check />
-                  <span>Soporte por email (48h respuesta)</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <Check />
-                  <span>1 revisión de arquitectura/mes</span>
-                </li>
-              </ul>
+            {/* Total Calculation */}
+            <div className="bg-secondary/30 rounded-xl p-6 mb-8">
+              <div className="flex justify-between items-center text-lg">
+                <span className="text-muted-foreground">{hours} hora(s) × ${PRICE_PER_HOUR}</span>
+                <span className="text-3xl font-bold text-gradient-cyan">${totalPrice}</span>
+              </div>
+            </div>
 
+            {/* What's Included */}
+            <ul className="space-y-4 mb-8">
+              <li className="flex items-start gap-3">
+                <Check />
+                <span>Consultoría DevOps especializada</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <Check />
+                <span>Setup y configuración CI/CD</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <Check />
+                <span>Infraestructura como código</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <Check />
+                <span>Kubernetes, Docker, Terraform</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <Check />
+                <span>AWS, GCP, Azure</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <Check />
+                <span>Soporte durante el servicio</span>
+              </li>
+            </ul>
+
+            <Button
+              className="w-full btn-primary text-primary-foreground py-6 text-lg font-semibold flex items-center justify-center gap-3"
+              onClick={handleOpenPaymentModal}
+              disabled={hours < 1}
+            >
+              <CreditCard />
+              Pagar ${totalPrice}
+            </Button>
+
+            {/* Card Icons */}
+            <div className="flex items-center justify-center gap-2 mt-4">
+              <VisaIcon />
+              <MastercardIcon />
+            </div>
+          </Card>
+
+          {/* Quick Select Buttons */}
+          <div className="flex flex-wrap justify-center gap-3 mt-8">
+            <span className="text-muted-foreground self-center mr-2">Selección rápida:</span>
+            {[5, 10, 20, 40].map((h) => (
               <Button
-                className="w-full py-6 text-lg font-semibold border-primary/50 hover:bg-primary/10 flex items-center justify-center gap-3"
+                key={h}
                 variant="outline"
-                onClick={() => handleOpenPaymentModal('starter')}
+                size="sm"
+                className={`border-border/50 hover:bg-secondary/50 ${hours === h ? 'bg-primary/20 border-primary' : ''}`}
+                onClick={() => setHours(h)}
               >
-                <CreditCard />
-                Pagar con Tarjeta
+                {h} horas
               </Button>
-
-              {/* Card Icons */}
-              <div className="flex items-center justify-center gap-2 mt-4">
-                <VisaIcon />
-                <MastercardIcon />
-              </div>
-            </Card>
-
-            {/* Enterprise Plan */}
-            <Card className="pricing-card featured p-8 relative overflow-hidden glow-cyan">
-              <Badge className="absolute top-4 right-4 bg-primary text-primary-foreground">
-                Más Popular
-              </Badge>
-
-              <div className="mb-6">
-                <h3 className="text-2xl font-bold mb-2">Enterprise</h3>
-                <p className="text-muted-foreground">Para empresas con necesidades avanzadas</p>
-              </div>
-
-              <div className="mb-8">
-                <div className="flex items-baseline gap-2">
-                  <span className="text-5xl font-bold text-gradient-cyan">$2,997</span>
-                  <span className="text-muted-foreground">/mes</span>
-                </div>
-                <p className="text-sm text-muted-foreground mt-2">Facturación automática mensual</p>
-              </div>
-
-              <ul className="space-y-4 mb-8">
-                <li className="flex items-start gap-3">
-                  <Check />
-                  <span>Proyectos ilimitados</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <Check />
-                  <span>Implementación completa DevOps</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <Check />
-                  <span>Monitoreo avanzado + alertas</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <Check />
-                  <span>Soporte prioritario (4h respuesta)</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <Check />
-                  <span>Consultor dedicado</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <Check />
-                  <span>Revisiones semanales</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <Check />
-                  <span>Capacitación para tu equipo</span>
-                </li>
-              </ul>
-
-              <Button
-                className="w-full btn-primary text-primary-foreground py-6 text-lg font-semibold flex items-center justify-center gap-3"
-                onClick={() => handleOpenPaymentModal('enterprise')}
-              >
-                <CreditCard />
-                Pagar con Tarjeta
-              </Button>
-
-              {/* Card Icons */}
-              <div className="flex items-center justify-center gap-2 mt-4">
-                <VisaIcon />
-                <MastercardIcon />
-              </div>
-            </Card>
+            ))}
           </div>
         </div>
       </section>
@@ -621,8 +659,8 @@ export default function Home() {
                       1
                     </div>
                     <div>
-                      <h4 className="font-semibold mb-1">Selecciona tu Plan</h4>
-                      <p className="text-sm text-muted-foreground">Elige entre Starter o Enterprise según tus necesidades.</p>
+                      <h4 className="font-semibold mb-1">Selecciona las horas</h4>
+                      <p className="text-sm text-muted-foreground">Elige cuántas horas de servicio DevOps necesitas.</p>
                     </div>
                   </div>
 
@@ -642,7 +680,7 @@ export default function Home() {
                     </div>
                     <div>
                       <h4 className="font-semibold mb-1">Confirma el Pago</h4>
-                      <p className="text-sm text-muted-foreground">Revisa los detalles y autoriza la suscripción mensual automática.</p>
+                      <p className="text-sm text-muted-foreground">Revisa los detalles y autoriza el pago único por tus horas seleccionadas.</p>
                     </div>
                   </div>
 
@@ -652,7 +690,7 @@ export default function Home() {
                     </div>
                     <div>
                       <h4 className="font-semibold mb-1">Recibe tu Factura</h4>
-                      <p className="text-sm text-muted-foreground">Recibirás una factura automática cada mes en tu correo electrónico.</p>
+                      <p className="text-sm text-muted-foreground">Recibirás una factura automática en tu correo electrónico.</p>
                     </div>
                   </div>
                 </div>
